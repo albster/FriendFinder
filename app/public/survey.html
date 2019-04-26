@@ -212,81 +212,80 @@
         <hr>
         <footer class="footer">
             <p>
-                <a href="/friends">API Friends List</a> | <a href="https://github.com/albster">GitHub Repo</a>
+                <a href="/api/friends">API Friends List</a> | <a href="https://github.com/albster">GitHub Repo</a>
             </p>
       </footer>
     </div>
 
     <script type="text/javascript">
     // Listener for submit button click
-    $('#submit').on('click', function(event) {
-    		// prevents the default submit button action
+    $("#submit").on("click", function(event) {
+       if ($("#name").val().trim() === "") {
+           alert("Please enter a valid name");
+       }
+       else if ($("#photo").val().trim() === ""){
+           alert("Please enter a link for a photo");
+       } else
+       {
         event.preventDefault();
-        // Set local variables
-        var matchStatus = $('.modal-title');
-        var modalBody = $('.modal-body');
-        // set responses to local variables
-        var name = $('#name').val().trim();
-        var photo = $('#photo').val();
-        var item1 = parseInt($('#item1').val());
-        var item2 = parseInt($('#item2').val());
-        var item3 = parseInt($('#item3').val());
-        var item4 = parseInt($('#item4').val());
-        var item5 = parseInt($('#item5').val());
-        var item6 = parseInt($('#item6').val());
-        var item7 = parseInt($('#item7').val());
-        var item8 = parseInt($('#item8').val());
-        var item9 = parseInt($('#item9').val());
-        var item10 = parseInt($('#item10').val());
-        // Set data to be sent to server
-        var userData = {
-            name: name,
-            photo: photo,
-            scores: [
-                item1,
-                item2,
-                item3,
-                item4,
-                item5,
-                item6,
-                item7,
-                item8,
-                item9,
-                item10
-            ]
+        var numberArray = [];
+        for (i = 1; i < 11; i++) {
+            numberArray.push($("#x" + i).val());
         };
-        // If responses are valid...
-        if (
-            (name !== '') && (photo !== '') && (!isNaN(item1)) &&
-            (!isNaN(item2)) && (!isNaN(item3)) && (!isNaN(item4)) &&
-            (!isNaN(item5)) && (!isNaN(item6)) && (!isNaN(item7)) &&
-            (!isNaN(item8)) && (!isNaN(item9)) && (!isNaN(item10))
-        ) {
-            // Grab the URL of the website
-            var currentURL = window.location.origin;
-            // AJAX post the data to the friends API. 
-            $.post(currentURL + "/api/friends", userData, function(data) {
-            		// If the data has a match, then show this
-                if (data.name !== undefined) {
-                    matchStatus.html('Your match...');
-                    modalBody.html('<p>...is ' + data.name + '!</p><img src="' + data.photo + '" height="200">');
-                } else {
-                	// If no match, show this
-                    matchStatus.html('Not enough data!');
-                    modalBody.html('<p>Unfortunately there is not yet enough user data to match you</p>');
-                }
-                // Toggle modal on
-                $('.modal').modal('toggle');
-            });
-        } else {
-        		// If the form was not valid, this error is shown
-            matchStatus.html('Error...');
-            modalBody.html('Please answer all questions on the form.');
-            // Toggle modal on
-            $('.modal').modal('toggle');
+       
+        var newFriend = {
+            name: $("#name").val().trim(),
+            photo:$("#photo").val().trim(),
+            scores: numberArray
+        };
+        console.log(newFriend);
+   
+    $.post("/api/friends", newFriend,
+        function(data) {
+            console.log(data);
         }
+    );
+    $.ajax({url: "api/friends", method: "GET"})
+    .done(function(res){
+        var bestFriend;
+        var currentBest = 100;
+        var differenceArray = [];
+        for (i = 0; i < res.length -1; i++ ) {
+          
+            for(j = 0; j < 10; j++) {
+                var friendsDifference = newFriend.scores[j] - res[i].scores[j];
+                differenceArray.push(Math.abs(friendsDifference));
+               
+            }
+            var difference = differenceArray.reduce(function(total,amount){
+                return total + amount
+            });
+            
+            if (difference < currentBest) {
+                bestFriend = res[i];
+                currentBest = difference;
+                differenceArray = [];
+            }
+            else {
+            differenceArray = [];
+            }
+        
+        };
+        console.log("ive been clicked")
+        var friendName = "<h4>" + bestFriend.name + "<h4>";
+        var friendPic = "<img width='300px' src=" + bestFriend.photo + ">";
+                    
+        $("#friend-modal").modal("show");
+        $(".modal-title").html(friendName);
+        $(".modal-body").html(friendPic);
+        $('#survey')[0].reset();
+                  
+         
     });
-    $('#friend-form').reset();
+}
+    return false;
+});
+
     </script>
 </body>
 
